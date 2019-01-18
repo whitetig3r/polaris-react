@@ -22,7 +22,7 @@ import IconDragDrop from './icons/drag-drop.svg';
 import IconAlertCircle from './icons/alert-circle.svg';
 
 import {fileAccepted, getDataTransferFiles} from './utils';
-import {DropZoneContext} from './types';
+import {DropZoneContext, Size} from './types';
 
 import styles from './DropZone.scss';
 
@@ -30,13 +30,15 @@ export type Type = 'file' | 'image';
 
 export interface State {
   id: string;
-  size: string;
+  height: Size;
+  width: Size;
   type?: string;
   error?: boolean;
   dragging: boolean;
   overlayText?: string;
   errorOverlayText?: string;
   numFiles: number;
+  measuring: boolean;
 }
 
 export interface Props {
@@ -109,7 +111,6 @@ export interface Props {
 export type CombinedProps = Props & WithAppProviderProps;
 
 const getUniqueID = createUniqueIDFactory('DropZone');
-
 export class DropZone extends React.Component<CombinedProps, State> {
   public static FileUpload: typeof FileUpload = FileUpload;
   public static defaultProps: Partial<CombinedProps> = {
@@ -171,19 +172,23 @@ export class DropZone extends React.Component<CombinedProps, State> {
     this.state = {
       type,
       id: props.id || getUniqueID(),
-      size: 'extraLarge',
+      height: Size.ExtraLarge,
       dragging: false,
       error: false,
       overlayText: translate(`Polaris.DropZone.overlayText${suffix}`),
       errorOverlayText: translate(`Polaris.DropZone.errorOverlayText${suffix}`),
       numFiles: 0,
+      width: Size.ExtraLarge,
+      measuring: true,
     };
   }
 
   get getContext(): DropZoneContext {
+    const {width, height, type = 'file'} = this.state;
     return {
-      size: this.state.size,
-      type: this.state.type || 'file',
+      width,
+      height,
+      type,
     };
   }
 
@@ -192,9 +197,11 @@ export class DropZone extends React.Component<CombinedProps, State> {
       id,
       dragging,
       error,
-      size,
+      height,
+      width,
       overlayText,
       errorOverlayText,
+      measuring,
     } = this.state;
     const {
       label,
@@ -224,11 +231,28 @@ export class DropZone extends React.Component<CombinedProps, State> {
       styles.DropZone,
       outline && styles.hasOutline,
       (active || dragging) && styles.isDragging,
+      measuring && styles.isMeasuring,
       error && styles.hasError,
-      size && size === 'extraLarge' && styles.sizeExtraLarge,
-      size && size === 'large' && styles.sizeLarge,
-      size && size === 'medium' && styles.sizeMedium,
-      size && size === 'small' && styles.sizeSmall,
+      height === Size.ExtraLarge && styles.sizeExtraLarge,
+      height === Size.Large && styles.sizeLarge,
+      height === Size.Medium && styles.sizeMedium,
+      height === Size.Small && styles.sizeSmall,
+    );
+
+    const extraLargeDropZoneSize =
+      width === Size.ExtraLarge && height !== Size.Small;
+
+    const mediumLargeDropZoneSize =
+      (width === Size.Medium || width === Size.Large) && height !== Size.Small;
+
+    const dragOverlayDisplayText = extraLargeDropZoneSize && (
+      <DisplayText size="small" element="p">
+        {overlayText}
+      </DisplayText>
+    );
+
+    const dragOverlayCaption = mediumLargeDropZoneSize && (
+      <Caption>{overlayText}</Caption>
     );
 
     const dragOverlay =
@@ -236,49 +260,48 @@ export class DropZone extends React.Component<CombinedProps, State> {
         <div className={styles.Overlay}>
           <Stack vertical spacing="tight">
             <Icon source={IconDragDrop} color="indigo" />
-            {size === 'extraLarge' && (
-              <DisplayText size="small" element="p">
-                {overlayText}
-              </DisplayText>
-            )}
-            {(size === 'medium' || size === 'large') && (
-              <Caption>{overlayText}</Caption>
-            )}
+            {dragOverlayDisplayText}
+            {dragOverlayCaption}
           </Stack>
         </div>
       ) : null;
+
+    const dragErrorOverlayDisplayText = extraLargeDropZoneSize && (
+      <DisplayText size="small" element="p">
+        {errorOverlayText}
+      </DisplayText>
+    );
+
+    const dragErrorOverlayCaption = mediumLargeDropZoneSize && (
+      <Caption>{errorOverlayText}</Caption>
+    );
 
     const dragErrorOverlay =
       dragging && error ? (
         <div className={styles.Overlay}>
           <Stack vertical spacing="tight">
             <Icon source={IconAlertCircle} color="red" />
-            {size === 'extraLarge' && (
-              <DisplayText size="small" element="p">
-                {errorOverlayText}
-              </DisplayText>
-            )}
-            {(size === 'medium' || size === 'large') && (
-              <Caption>{errorOverlayText}</Caption>
-            )}
+            {dragErrorOverlayDisplayText}
+            {dragErrorOverlayCaption}
           </Stack>
         </div>
       ) : null;
 
     const dropZoneMarkup = (
-      <div
-        ref={this.setNode}
-        className={classes}
-        aria-disabled={disabled}
-        onClick={this.handleClick}
-        onDragStart={handleDragStart}
-      >
-        {dragOverlay}
-        {dragErrorOverlay}
-        <div className={styles.Container}>{children}</div>
-        <VisuallyHidden>
-          <input {...inputAttributes} />
-        </VisuallyHidden>
+      <div ref={this.setNode} className={styles.DropZoneWrapper}>
+        <div
+          className={classes}
+          aria-disabled={disabled}
+          onClick={this.handleClick}
+          onDragStart={handleDragStart}
+        >
+          {dragOverlay}
+          {dragErrorOverlay}
+          <div className={styles.Container}>{children}</div>
+          <VisuallyHidden>
+            <input {...inputAttributes} />
+          </VisuallyHidden>
+        </div>
       </div>
     );
 
@@ -357,24 +380,36 @@ export class DropZone extends React.Component<CombinedProps, State> {
   }
 
   @autobind
+  private setWrapperSize(size: string, node: HTMLElement) {
+    let wrapper;
+    if (size === 'height') {
+      wrapper = node.getBoundingClientRect().height;
+    } else {
+      wrapper = node.getBoundingClientRect().width;
+    }
+    if (wrapper < Size.Small) {
+      wrapper = Size.Small;
+    } else if (wrapper < Size.Medium) {
+      wrapper = Size.Medium;
+    } else if (wrapper < Size.Large) {
+      wrapper = Size.Large;
+    } else {
+      wrapper = Size.ExtraLarge;
+    }
+    return wrapper;
+  }
+
+  @autobind
   @debounce(50, {trailing: true})
   private adjustSize() {
     if (!this.node) {
       return;
     }
 
-    let size = 'extraLarge';
-    const width = this.node.getBoundingClientRect().width;
+    const height = this.setWrapperSize('height', this.node);
+    const width = this.setWrapperSize('width', this.node);
 
-    if (width < 100) {
-      size = 'small';
-    } else if (width < 160) {
-      size = 'medium';
-    } else if (width < 300) {
-      size = 'large';
-    }
-
-    this.setState({size});
+    this.setState({height, width, measuring: false});
   }
 
   @autobind
