@@ -2,6 +2,7 @@ import * as React from 'react';
 import {classNames} from '@shopify/react-utilities';
 
 import {Key} from '../../../../types';
+import Button from '../../../Button';
 
 import Icon from '../../../Icon';
 import KeypressListener from '../../../KeypressListener';
@@ -27,7 +28,7 @@ export default class Toast extends React.Component<Props, never> {
   }
 
   render() {
-    const {content, onDismiss, error} = this.props;
+    const {content, onDismiss, error, action} = this.props;
 
     const dismissMarkup = (
       <button type="button" className={styles.CloseButton} onClick={onDismiss}>
@@ -35,12 +36,21 @@ export default class Toast extends React.Component<Props, never> {
       </button>
     );
 
+    const actionMarkup = action ? (
+      <div className={styles.Action}>
+        <Button plain monochrome onClick={action.onAction}>
+          {action.content}
+        </Button>
+      </div>
+    ) : null;
+
     const className = classNames(styles.Toast, error && styles.error);
 
     return (
       <div className={className}>
         <KeypressListener keyCode={Key.Escape} handler={onDismiss} />
         {content}
+        {actionMarkup}
         {dismissMarkup}
       </div>
     );

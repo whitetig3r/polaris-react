@@ -1,7 +1,8 @@
 import * as React from 'react';
 import {timer} from '@shopify/jest-dom-mocks';
-import {mountWithAppProvider} from 'test-utilities';
+import {mountWithAppProvider, trigger} from 'test-utilities';
 import {noop} from 'utilities/other';
+import Button from '../../../../Button';
 import {ToastProps as Props} from '../../../types';
 import Toast from '../Toast';
 import {Key} from '../../../../../types';
@@ -34,6 +35,46 @@ describe('<Toast />', () => {
   describe('dismiss button', () => {
     it('renders by default', () => {
       expect(message.find('button')).toHaveLength(1);
+    });
+  });
+
+  describe('action', () => {
+    const mockAction = {
+      content: 'Do something',
+      onAction: noop,
+    };
+
+    it('does not render when not defined', () => {
+      const message = mountWithAppProvider(<Toast {...mockProps} />);
+      expect(message.find(Button)).toHaveLength(0);
+    });
+
+    it('renders when defined', () => {
+      const message = mountWithAppProvider(
+        <Toast {...mockProps} action={mockAction} />,
+      );
+
+      expect(message.find(Button)).toHaveLength(1);
+    });
+
+    it('passes content as button text', () => {
+      const message = mountWithAppProvider(
+        <Toast {...mockProps} action={mockAction} />,
+      );
+
+      expect(message.find(Button).text()).toContain(mockAction.content);
+    });
+
+    it('triggers onAction when button is clicked', () => {
+      const spy = jest.fn();
+      const mockActionWithSpy = {...mockAction, onAction: spy};
+      const message = mountWithAppProvider(
+        <Toast {...mockProps} action={mockActionWithSpy} />,
+      );
+
+      trigger(message.find(Button), 'onClick');
+
+      expect(spy).toHaveBeenCalledTimes(1);
     });
   });
 
