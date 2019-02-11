@@ -1,5 +1,5 @@
-import get from 'lodash/get';
 import replace from 'lodash/replace';
+import get from '../../../../utilities/get';
 import {
   TranslationDictionary,
   PrimitiveReplacementDictionary,
