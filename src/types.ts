@@ -242,3 +242,7 @@ export const contentContextTypes: ValidationMap<any> = {
 export interface WithContextTypes<IJ> {
   context: IJ;
 }
+
+export interface GeneralObject {
+  [key: string]: any;
+}
