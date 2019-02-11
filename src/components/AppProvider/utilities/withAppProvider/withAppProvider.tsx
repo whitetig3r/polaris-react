@@ -1,8 +1,8 @@
 import * as React from 'react';
 import hoistStatics from 'hoist-non-react-statics';
-import merge from 'lodash/merge';
 import {ClientApplication} from '@shopify/app-bridge';
 import {autobind} from '@shopify/javascript-utilities/decorators';
+import merge from '../../../../utilities/merge';
 import Intl from '../Intl';
 import Link from '../Link';
 import {StickyManager} from '../withSticky';
