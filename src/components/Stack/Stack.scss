@@ -25,6 +25,11 @@
 
 .vertical {
   flex-direction: column;
+  margin-left: spacing(none);
+
+  > .Item {
+    margin-left: spacing(none);
+  }
 }
 
 .spacingNone {
