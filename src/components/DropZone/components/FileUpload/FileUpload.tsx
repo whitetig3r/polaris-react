@@ -133,7 +133,7 @@ export class FileUpload extends React.Component<CombinedProps, State> {
     const smallView =
       size === 'small' ? (
         <Stack vertical spacing="tight">
-          <Icon source={<IconDragDrop />} color="inkLightest" />
+          <Icon source={IconDragDrop} color="inkLightest" />
         </Stack>
       ) : null;
 

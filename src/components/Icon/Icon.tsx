@@ -207,25 +207,39 @@ function Icon({
     backdrop && styles.hasBackdrop,
   );
 
+  const defaultIconProps = {
+    className: styles.Svg,
+    viewBox: '0 0 20 20',
+    focusable: 'false',
+    'aria-hidden': 'true',
+  };
+
   let contentMarkup: React.ReactNode;
-  const SourceComponent = source;
   if (source === 'placeholder') {
     contentMarkup = <div className={styles.Placeholder} />;
-  } else if (React.isValidElement(SourceComponent)) {
-    contentMarkup = source;
+  } else if (typeof source === 'function') {
+    const SourceComponent = source;
+    contentMarkup = <SourceComponent {...defaultIconProps} />;
   } else if (typeof source === 'string' && isBundledIcon(source)) {
-    contentMarkup = BUNDLED_ICONS[source];
+    // const SourceComponent = BUNDLED_ICONS[source];
+    // contentMarkup = <SourceComponent {...defaultIconProps} />;
+    const iconSource = BUNDLED_ICONS[source];
+    contentMarkup = (
+      <svg
+        {...defaultIconProps}
+        viewBox={iconSource.viewBox}
+        dangerouslySetInnerHTML={{__html: iconSource.body}}
+      />
+    );
   } else {
     const iconSource = source as SVGSource;
     contentMarkup = iconSource &&
       iconSource.viewBox &&
       iconSource.body && (
         <svg
-          className={styles.Svg}
+          {...defaultIconProps}
           viewBox={iconSource.viewBox}
           dangerouslySetInnerHTML={{__html: iconSource.body}}
-          focusable="false"
-          aria-hidden="true"
         />
       );
   }
