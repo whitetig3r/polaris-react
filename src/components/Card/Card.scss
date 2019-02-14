@@ -17,7 +17,7 @@
 }
 
 .Header {
-  padding: spacing() spacing() rem(12px) spacing();
+  padding: spacing() spacing() spacing(base-tight) spacing();
 
   @include page-content-when-not-fully-condensed {
     padding-right: spacing(loose);
@@ -63,7 +63,7 @@
 .Footer {
   display: flex;
   justify-content: flex-end;
-  padding: rem(12px) spacing() spacing() spacing();
+  padding: spacing(base-tight) spacing() spacing() spacing();
 
   @include page-content-when-not-fully-condensed {
     padding-right: spacing(loose);
