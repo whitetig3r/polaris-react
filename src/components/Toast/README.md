@@ -439,7 +439,7 @@ Use action when merchants have the ability to act on the message. For example, t
 - To present a small amount of content or a menu of actions in a non-blocking overlay, [use the popover component](/components/popover)
 - To communicate a change or condition that needs the merchant’s attention within the context of a page, [use the banner component](/components/feedback-indicators/banner)
 
-  ***
+---
 
 ## Accessibility
 
